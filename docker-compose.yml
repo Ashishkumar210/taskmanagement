@@ -1,0 +1,179 @@
+# name: irctc-backend
+
+# services:
+
+#   # ============================================================
+#   # PostgreSQL
+#   # ============================================================
+#   postgres:
+#     image: postgres:16
+#     container_name: postgres
+#     restart: always
+#     environment:
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: root
+#       POSTGRES_DB: user_service_database
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U postgres -d user_service_database"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#     networks:
+#       - irctc-network
+
+
+#   # ============================================================
+#   # pgAdmin
+#   # ============================================================
+#   pgadmin:
+#     image: dpage/pgadmin4:latest
+#     container_name: pgadmin
+#     restart: always
+#     environment:
+#       PGADMIN_DEFAULT_EMAIL: admin@admin.com
+#       PGADMIN_DEFAULT_PASSWORD: admin
+#     ports:
+#       - "8081:80"
+#     depends_on:
+#       postgres:
+#         condition: service_healthy
+#     networks:
+#       - irctc-network
+
+
+#   # ============================================================
+#   # Redis Stack
+#   # ============================================================
+#   redis:
+#     image: redis/redis-stack:6.2.6-v19
+#     container_name: redis
+#     restart: always
+#     environment:
+#       REDIS_ARGS: "--requirepass irctcpass"
+#     ports:
+#       - "6379:6379"
+#       - "8001:8001"
+#     volumes:
+#       - redis_data:/data
+#     networks:
+#       - irctc-network
+
+
+#   # ============================================================
+#   # Zookeeper
+#   # ============================================================
+#   zookeeper:
+#     image: confluentinc/cp-zookeeper:7.5.3
+#     container_name: zookeeper
+#     restart: always
+#     environment:
+#       ZOOKEEPER_CLIENT_PORT: 2181
+#       ZOOKEEPER_TICK_TIME: 2000
+#     ports:
+#       - "2181:2181"
+#     networks:
+#       - irctc-network
+
+
+#   # ============================================================
+#   # Kafka
+#   # ============================================================
+#   kafka:
+#     image: confluentinc/cp-kafka:7.5.3
+#     container_name: kafka
+#     restart: always
+#     depends_on:
+#       - zookeeper
+#     ports:
+#       - "9092:9092"
+#       - "29092:29092"
+#     environment:
+
+#       KAFKA_BROKER_ID: 1
+
+#       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+#       # --------------------------------------------------------
+#       # Listeners
+#       # INTERNAL  -> Docker containers
+#       # EXTERNAL  -> Your host machine
+#       # --------------------------------------------------------
+#       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+
+#       KAFKA_ADVERTISED_LISTENERS: >
+#         INTERNAL://kafka:29092,
+#         EXTERNAL://localhost:9092
+
+#       KAFKA_LISTENERS: >
+#         INTERNAL://0.0.0.0:29092,
+#         EXTERNAL://0.0.0.0:9092
+
+#       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
+#       # --------------------------------------------------------
+#       # Single broker configuration
+#       # --------------------------------------------------------
+#       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+#       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+#       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+#       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+#     volumes:
+#       - kafka_data:/var/lib/kafka/data
+
+#     networks:
+#       - irctc-network
+
+
+#   # ============================================================
+#   # Kafka UI
+#   # ============================================================
+#   kafka-ui:
+#     image: provectuslabs/kafka-ui:latest
+#     container_name: kafka-ui
+#     restart: always
+#     depends_on:
+#       - kafka
+#     ports:
+#       - "8080:8080"
+#     environment:
+
+#       KAFKA_CLUSTERS_0_NAME: irctc-kafka
+
+#       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+
+#       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+#     networks:
+#       - irctc-network
+
+
+# # ==============================================================
+# # Volumes
+# # ==============================================================
+# volumes:
+
+#   postgres_data:
+#     driver: local
+
+#   redis_data:
+#     driver: local
+
+#   kafka_data:
+#     driver: local
+
+
+# # ==============================================================
+# # Network
+# # ==============================================================
+# networks:
+
+#   irctc-network:
+#     driver: bridge

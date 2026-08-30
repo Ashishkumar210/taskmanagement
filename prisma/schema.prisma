@@ -1,0 +1,258 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String  @id @default(uuid()) @db.Uuid
+  firstName String  @map("first_name") @db.VarChar(100)
+  lastName  String? @map("last_name") @db.VarChar(100)
+
+  email    String  @unique @db.VarChar(255)
+  mobileNo String? @unique @map("mobile_no") @db.VarChar(20)
+
+  employeeCode String? @unique @map("employee_code") @db.VarChar(50)
+
+  passwordHash   String  @map("password_hash")
+  emailVerified  Boolean @default(false) @map("email_verified")
+  mobileVerified Boolean @default(false) @map("mobile_verified")
+
+  otp          String?   @db.VarChar(10)
+  otpExpiresAt DateTime? @map("otp_expires_at")
+
+  status      UserStatus @default(ACTIVE)
+  lastLoginAt DateTime?  @map("last_login_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  departmentId Int?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  dailyWorkLogs DailyWorkLog[]
+
+  @@map("users")
+}
+
+model Department {
+  id   Int     @id @default(autoincrement())
+  name String  @db.VarChar(100)
+  code String? @unique @db.VarChar(50)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  users User[]
+
+  @@index([name])
+}
+
+model Project {
+  id              Int @id @default(autoincrement())
+  organization_id Int
+
+  name        String  @db.VarChar(255)
+  description String? @db.Text
+
+  status ProjectStatus @default(ACTIVE)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  tasks           Task[]
+  daily_work_logs DailyWorkLog[]
+
+  @@index([organization_id])
+  @@index([organization_id, status])
+}
+
+model Task {
+  id              Int  @id @default(autoincrement())
+  organization_id Int
+  project_id      Int?
+
+  title       String
+  description String?   @db.Text
+  due_date    DateTime?
+
+  priority TaskPriority @default(MEDIUM)
+  status   TaskStatus   @default(PENDING)
+
+  created_by Int
+  updated_by Int?
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  deleted_by Int?
+
+  project         Project?            @relation(fields: [project_id], references: [id])
+  checklist_items TaskChecklistItem[]
+  attachments     TaskAttachment[]
+  activity_logs   TaskActivityLog[]
+  work_logs       DailyWorkLog[]
+
+  @@index([organization_id, deleted_at])
+  @@index([organization_id, project_id])
+  @@index([organization_id, status])
+  @@index([organization_id, priority])
+  @@index([organization_id, due_date])
+}
+
+model TaskChecklistItem {
+  id Int @id @default(autoincrement())
+
+  task_id Int
+
+  title        String  @db.VarChar(255)
+  is_completed Boolean @default(false)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@index([task_id])
+}
+
+model TaskAttachment {
+  id Int @id @default(autoincrement())
+
+  task_id         Int
+  organization_id Int
+  uploaded_by     Int
+
+  file_name String
+  file_url  String
+  file_size Int
+  mime_type String
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@index([task_id])
+  @@index([organization_id])
+}
+
+model TaskActivityLog {
+  id Int @id @default(autoincrement())
+
+  task_id         Int
+  organization_id Int
+  user_id         Int
+
+  action String
+
+  old_value Json?
+  new_value Json?
+  metadata  Json?
+
+  created_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@index([task_id, created_at])
+  @@index([organization_id, created_at])
+}
+
+model DailyWorkLog {
+  id              Int @id @default(autoincrement())
+  organization_id Int
+
+  user_id String @db.Uuid
+
+  log_date     DateTime @db.Date
+  hours_worked Decimal  @db.Decimal(5, 2)
+
+  task_id    Int?
+  project_id Int?
+
+  work_item_title String  @db.VarChar(500)
+  daily_summary   String  @db.Text
+  achievements    String? @db.Text
+  blockers        String? @db.Text
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  deleted_by String?   @db.Uuid
+
+  task    Task?    @relation(fields: [task_id], references: [id])
+  project Project? @relation(fields: [project_id], references: [id])
+  user    User     @relation(fields: [user_id], references: [id])
+
+  attachments DailyWorkLogAttachment[]
+
+  @@index([organization_id, user_id, log_date])
+  @@index([organization_id, log_date])
+  @@index([organization_id, task_id])
+  @@index([organization_id, project_id])
+  @@index([user_id, log_date])
+  @@index([deleted_at])
+  @@map("daily_work_logs")
+}
+
+model DailyWorkLogAttachment {
+  id Int @id @default(autoincrement())
+
+  work_log_id     Int
+  organization_id Int
+  uploaded_by     String @db.Uuid
+
+  file_name String @db.VarChar(500)
+  file_url  String @db.Text
+  file_size BigInt
+  mime_type String @db.VarChar(150)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  work_log DailyWorkLog @relation(fields: [work_log_id], references: [id], onDelete: Cascade)
+
+  @@index([work_log_id])
+  @@index([organization_id])
+  @@index([uploaded_by])
+  @@map("daily_work_log_attachments")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BLOCKED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  IN_REVIEW
+  BLOCKED
+  COMPLETED
+  CANCELLED
+}
+
+enum ProjectStatus {
+  ACTIVE
+  INACTIVE
+  COMPLETED
+  ARCHIVED
+}
