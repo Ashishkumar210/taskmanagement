@@ -9,6 +9,7 @@ const TaskController =
 
 const router =
   express.Router();
+const authMiddleware = require("../middlewares/auth.middleware");
 
 /**
  * Temporary local storage.
@@ -72,6 +73,7 @@ const upload =
  */
 router.post(
   "/save",
+  authMiddleware,
   upload.single("file"),
   TaskController.createTask
 );
@@ -83,6 +85,7 @@ router.post(
  */
 router.get(
   "/",
+  authMiddleware,
   TaskController.getTaskList
 );
 

@@ -3,28 +3,28 @@
 
 
 
-const jwt = require("jsonwebtoken");
+// const jwt = require("jsonwebtoken");
 const { config } = require("../config");
 
-const generateAccessToken = (user) => {
-  if (!user || !user.id) {
-    throw new Error("User information is required");
-  }
+// const generateAccessToken = (user) => {
+//   if (!user || !user.id) {
+//     throw new Error("User information is required");
+//   }
 
-  const payload = {
-    id: user.id,
-    email: user.email ?? null,
+//   const payload = {
+//     id: user.id,
+//     email: user.email ?? null,
 
-  };
+//   };
 
-  return jwt.sign(
-    payload,
-    config.JWT_ACCESS_SECRET,
-    {
-      expiresIn: config.JWT_ACCESS_EXPIRES_IN || "15m",
-    }
-  );
-};
+//   return jwt.sign(
+//     payload,
+//     config.JWT_ACCESS_SECRET,
+//     {
+//       expiresIn: config.JWT_ACCESS_EXPIRES_IN || "15m",
+//     }
+//   );
+// };
 
 
 
@@ -70,7 +70,7 @@ const generateAccessToken = (user) => {
 
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const { config } = require("../config");
+// const { config } = require("../config");
 
 const generateRefreshToken = (user, deviceId) => {
   const jti = crypto.randomUUID();
@@ -233,7 +233,7 @@ const deleteRefreshSession = async (jti) => {
 // };
 module.exports = {
   generateAccessToken,
-  generateRefreshToken,
+  // generateRefreshToken,
   verifyAccessToken,
   storeRefreshSession,
   deleteRefreshSession,

@@ -482,6 +482,7 @@ exports.createTask = async ({
 exports.getTaskList = async ({
   organization_id,
 
+  created_by,
   page = 1,
 
   limit = 20,
@@ -579,6 +580,8 @@ exports.getTaskList = async ({
   } =
     await TaskRepo.getTaskList({
       organization_id,
+
+      created_by,
 
       search: searchText,
 

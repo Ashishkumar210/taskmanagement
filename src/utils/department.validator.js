@@ -48,3 +48,100 @@ exports.validateDepartmentListQuery = ({
       search?.trim() || null,
   };
 };
+
+
+
+
+/**
+ * Validate create department
+ */
+exports.validateCreateDepartment = ({
+  name,
+  code,
+}) => {
+  /**
+   * Department name
+   */
+  if (
+    !name ||
+    typeof name !== "string"
+  ) {
+    throw new BadRequestError(
+      "Department name is required."
+    );
+  }
+
+  const normalizedName =
+    name
+      .trim()
+      .replace(/\s+/g, " ");
+
+  if (normalizedName.length < 2) {
+    throw new BadRequestError(
+      "Department name must contain at least 2 characters."
+    );
+  }
+
+  if (normalizedName.length > 100) {
+    throw new BadRequestError(
+      "Department name cannot exceed 100 characters."
+    );
+  }
+
+  /**
+   * Department code is optional.
+   */
+  let normalizedCode = null;
+
+  if (
+    code !== undefined &&
+    code !== null &&
+    code !== ""
+  ) {
+    if (typeof code !== "string") {
+      throw new BadRequestError(
+        "Department code must be a string."
+      );
+    }
+
+    normalizedCode =
+      code
+        .trim()
+        .toUpperCase();
+
+    if (normalizedCode.length < 2) {
+      throw new BadRequestError(
+        "Department code must contain at least 2 characters."
+      );
+    }
+
+    if (normalizedCode.length > 50) {
+      throw new BadRequestError(
+        "Department code cannot exceed 50 characters."
+      );
+    }
+
+    /**
+     * Allow:
+     *
+     * ENG
+     * PROD-ENG
+     * HR01
+     *
+     * Reject special characters.
+     */
+    const codeRegex =
+      /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
+
+    if (!codeRegex.test(normalizedCode)) {
+      throw new BadRequestError(
+        "Department code can contain only letters, numbers and hyphens."
+      );
+    }
+  }
+
+  return {
+    name: normalizedName,
+    code: normalizedCode,
+  };
+};

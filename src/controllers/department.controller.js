@@ -18,3 +18,25 @@ exports.getDepartmentList = asyncHandler(
     });
   }
 );
+
+
+
+
+/**
+ * Create department
+ */
+exports.createDepartment =
+  asyncHandler(async (req, res) => {
+    const result =
+      await DepartmentService.createDepartment({
+        name: req.body.name,
+        code: req.body.code,
+      });
+
+    return res.status(201).json({
+      success: true,
+      message:
+        "Department created successfully.",
+      data: result,
+    });
+  });

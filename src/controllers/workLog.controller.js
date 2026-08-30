@@ -8,9 +8,16 @@ const WorkLogService =
  */
 exports.createWorkLog =
   asyncHandler(async (req, res) => {
+    // const userId =
+    //   req.user?.user_id ||
+    //   req.user?.userId || "1";
+
     const userId =
       req.user?.user_id ||
-      req.user?.userId || 1;
+      req.user?.userId ||
+      req.user?.id ||
+      "00000000-0000-0000-0001";
+
 
     const organizationId =
       req.user?.organization_id ?? 1;

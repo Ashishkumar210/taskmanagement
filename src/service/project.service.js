@@ -2,7 +2,7 @@ const ProjectRepo =
   require("../repository/project.repo");
 
 const {
-  validateProjectListQuery,
+  validateProjectListQuery, validateCreateProject
 } = require("../utils/project.validator");
 
 const {
@@ -111,5 +111,103 @@ exports.getProjectList = async ({
       hasPreviousPage:
         currentPage > 1,
     },
+  };
+};
+
+
+
+
+/**
+ * Create project
+ */
+exports.createProject = async ({
+  organization_id,
+
+  user_id,
+
+  name,
+
+  description,
+
+  status,
+}) => {
+  /**
+   * Organization is mandatory.
+   */
+  if (!organization_id) {
+    throw new BadRequestError(
+      "Organization is required."
+    );
+  }
+
+  /**
+   * Validate request.
+   */
+  const validated =
+    validateCreateProject({
+      name,
+      description,
+      status,
+    });
+
+  /**
+   * Check duplicate project name
+   * within the same organization.
+   */
+  const existingProject =
+    await ProjectRepo.findByName({
+      organization_id,
+
+      name:
+        validated.name,
+    });
+
+  if (existingProject) {
+    throw new ConflictError(
+      "A project with this name already exists."
+    );
+  }
+
+  /**
+   * Create project.
+   */
+  const project =
+    await ProjectRepo.createProject({
+      organization_id,
+
+      name:
+        validated.name,
+
+      description:
+        validated.description,
+
+      status:
+        validated.status,
+    });
+
+  /**
+   * Return safe project data.
+   */
+  return {
+    id:
+      project.id,
+
+    organization_id:
+      project.organization_id,
+
+    name:
+      project.name,
+
+    description:
+      project.description,
+
+    status:
+      project.status,
+
+    created_at:
+      project.created_at,
+
+    updated_at:
+      project.updated_at,
   };
 };

@@ -15,4 +15,9 @@ router.get(
   DepartmentController.getDepartmentList
 );
 
+
+router.post(
+  "/save",
+  DepartmentController.createDepartment
+);
 module.exports = router;

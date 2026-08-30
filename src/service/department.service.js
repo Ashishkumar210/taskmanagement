@@ -2,7 +2,7 @@ const DepartmentRepo =
   require("../repository/department.repo");
 
 const {
-  validateDepartmentListQuery,
+  validateDepartmentListQuery, validateCreateDepartment
 } = require("../utils/department.validator");
 
 /**
@@ -72,3 +72,89 @@ exports.getDepartmentList = async ({
     },
   };
 };
+
+
+
+
+
+/**
+ * Create department
+ */
+exports.createDepartment =
+  async ({
+    name,
+    code,
+  }) => {
+    /**
+     * Validate input
+     */
+    const validated =
+      validateCreateDepartment({
+        name,
+        code,
+      });
+
+    /**
+     * Check duplicate name
+     */
+    const existingByName =
+      await DepartmentRepo.findByName(
+        validated.name
+      );
+
+    if (existingByName) {
+      throw new ConflictError(
+        "Department name already exists."
+      );
+    }
+
+    /**
+     * Check duplicate code
+     *
+     * Only when code is provided.
+     */
+    if (validated.code) {
+      const existingByCode =
+        await DepartmentRepo.findByCode(
+          validated.code
+        );
+
+      if (existingByCode) {
+        throw new ConflictError(
+          "Department code already exists."
+        );
+      }
+    }
+
+    /**
+     * Create department
+     */
+    const department =
+      await DepartmentRepo.createDepartment({
+        name:
+          validated.name,
+
+        code:
+          validated.code,
+      });
+
+    /**
+     * Return safe response
+     */
+    return {
+      id:
+        department.id,
+
+      name:
+        department.name,
+
+      code:
+        department.code,
+
+      createdAt:
+        department.createdAt,
+
+      updatedAt:
+        department.updatedAt,
+    };
+  };

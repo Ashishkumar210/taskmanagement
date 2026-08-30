@@ -25,7 +25,7 @@ exports.createTask = asyncHandler(async (req, res) => {
     req.user?.organization_id ?? 1;
 
   const created_by =
-    req.user?.user_id ?? 1;
+    req.user?.userId ?? 1;
 
   const {
     title,
@@ -96,10 +96,14 @@ exports.getTaskList = asyncHandler(
      */
     const organization_id =
       req.user?.organization_id ?? 1;
+    created_by = req.user?.userId ?? 1;
+    console.log('user======', req.user);
 
     const result =
       await TaskService.getTaskList({
         organization_id,
+        created_by,
+
         ...req.query,
       });
 

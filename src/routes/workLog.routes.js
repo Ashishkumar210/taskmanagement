@@ -7,6 +7,8 @@ const multer =
 const WorkLogController =
   require("../controllers/workLog.controller");
 
+const authMiddleware = require("../middlewares/auth.middleware");
+
 const router =
   express.Router();
 
@@ -26,6 +28,8 @@ const upload =
  */
 router.post(
   "/",
+
+  authMiddleware,
   upload.single("file"),
   WorkLogController.createWorkLog
 );

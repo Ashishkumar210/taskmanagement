@@ -122,3 +122,109 @@ exports.validateProjectListQuery = ({
       normalizedSortOrder,
   };
 };
+
+
+
+
+// const VALID_STATUSES = [
+//   "ACTIVE",
+//   "INACTIVE",
+//   "COMPLETED",
+//   "ARCHIVED",
+// ];
+
+/**
+ * Validate create project
+ */
+exports.validateCreateProject = ({
+  name,
+  description,
+  status,
+}) => {
+  /**
+   * Name
+   */
+  if (
+    !name ||
+    typeof name !== "string"
+  ) {
+    throw new BadRequestError(
+      "Project name is required."
+    );
+  }
+
+  const normalizedName =
+    name
+      .trim()
+      .replace(/\s+/g, " ");
+
+  if (normalizedName.length < 2) {
+    throw new BadRequestError(
+      "Project name must contain at least 2 characters."
+    );
+  }
+
+  if (normalizedName.length > 255) {
+    throw new BadRequestError(
+      "Project name cannot exceed 255 characters."
+    );
+  }
+
+  /**
+   * Description
+   */
+  let normalizedDescription =
+    null;
+
+  if (
+    description !== undefined &&
+    description !== null &&
+    description !== ""
+  ) {
+    if (
+      typeof description !== "string"
+    ) {
+      throw new BadRequestError(
+        "Project description must be a string."
+      );
+    }
+
+    normalizedDescription =
+      description.trim();
+
+    if (
+      normalizedDescription.length >
+      10000
+    ) {
+      throw new BadRequestError(
+        "Project description cannot exceed 10000 characters."
+      );
+    }
+  }
+
+  /**
+   * Status
+   */
+  const normalizedStatus =
+    status || "ACTIVE";
+
+  if (
+    !VALID_STATUSES.includes(
+      normalizedStatus
+    )
+  ) {
+    throw new BadRequestError(
+      "Invalid project status."
+    );
+  }
+
+  return {
+    name: normalizedName,
+
+    description:
+      normalizedDescription,
+
+    status:
+      normalizedStatus,
+  };
+};

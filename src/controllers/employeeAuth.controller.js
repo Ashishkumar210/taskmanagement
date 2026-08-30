@@ -25,6 +25,7 @@ exports.signup = asyncHandler(async (req, res) => {
     departmentId,
     password,
     confirmPassword,
+    rememberMe = false
   } = req.body;
 
   /**
@@ -58,9 +59,36 @@ exports.signup = asyncHandler(async (req, res) => {
     email,
     employeeCode,
     departmentId,
-    password,
+    password
   });
 
+
+  /**
+  * Store access token in HTTP-only cookie
+  */
+  res.cookie(
+    "access_token",
+    result.accessToken,
+    {
+      httpOnly: true,
+
+      secure: true,
+
+      sameSite: "none",
+
+      /**
+       * Remember me:
+       *
+       * true  -> persistent cookie
+       * false -> session cookie
+       */
+      ...(rememberMe && {
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      }),
+
+      path: "/",
+    }
+  );
   return res.status(201).json({
     success: true,
     message: "Employee account created successfully.",
@@ -107,10 +135,9 @@ exports.signin = asyncHandler(async (req, res) => {
     {
       httpOnly: true,
 
-      secure:
-        process.env.NODE_ENV === "production",
+      secure: true,
 
-      sameSite: "strict",
+      sameSite: "none",
 
       /**
        * Remember me:
@@ -119,8 +146,7 @@ exports.signin = asyncHandler(async (req, res) => {
        * false -> session cookie
        */
       ...(rememberMe && {
-        maxAge:
-          config.AUTH_REMEMBER_ME_TTL,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       }),
 
       path: "/",

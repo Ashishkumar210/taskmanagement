@@ -296,8 +296,293 @@ exports.uploadTaskFile = async (
 /**
  * Get task list
  */
+// exports.getTaskList = async ({
+
+
+//   organization_id,
+
+//   search,
+
+//   project_id,
+
+//   status,
+
+//   priority,
+
+//   due_date_from,
+
+//   due_date_to,
+
+//   limit,
+
+//   offset,
+
+//   sortBy,
+
+//   sortOrder,
+// }) => {
+//   /**
+//    * Base filter
+//    *
+//    * Organization isolation is mandatory.
+//    */
+//   const where = {
+//     organization_id,
+
+//     deleted_at: null,
+//   };
+
+//   /**
+//    * Search by task title
+//    * or description.
+//    */
+//   if (search) {
+//     where.OR = [
+//       {
+//         title: {
+//           contains:
+//             search,
+
+//           mode:
+//             "insensitive",
+//         },
+//       },
+
+//       {
+//         description: {
+//           contains:
+//             search,
+
+//           mode:
+//             "insensitive",
+//         },
+//       },
+//     ];
+//   }
+
+//   /**
+//    * Project filter
+//    */
+//   if (project_id) {
+//     where.project_id =
+//       project_id;
+//   }
+
+//   /**
+//    * Status filter
+//    */
+//   if (status) {
+//     where.status =
+//       status;
+//   }
+
+//   /**
+//    * Priority filter
+//    */
+//   if (priority) {
+//     where.priority =
+//       priority;
+//   }
+
+//   /**
+//    * Due date filter
+//    */
+//   if (
+//     due_date_from ||
+//     due_date_to
+//   ) {
+//     where.due_date = {};
+
+//     if (due_date_from) {
+//       where.due_date.gte =
+//         due_date_from;
+//     }
+
+//     if (due_date_to) {
+//       where.due_date.lte =
+//         due_date_to;
+//     }
+//   }
+
+//   /**
+//    * Sorting
+//    *
+//    * sortBy is already whitelisted
+//    * by validator.
+//    */
+//   const orderBy = {
+//     [sortBy]:
+//       sortOrder,
+//   };
+
+//   /**
+//    * Fetch tasks and total
+//    * in parallel.
+//    */
+//   const [
+//     tasks,
+//     total,
+//   ] = await Promise.all([
+//     prisma.task.findMany({
+//       where,
+
+//       select: {
+//         id: true,
+
+//         organization_id: true,
+
+//         project_id: true,
+
+//         title: true,
+
+//         description: true,
+
+//         due_date: true,
+
+//         priority: true,
+
+//         status: true,
+
+//         created_by: true,
+
+//         updated_by: true,
+
+//         created_at: true,
+
+//         updated_at: true,
+
+//         project: {
+//           select: {
+//             id: true,
+
+//             name: true,
+
+//             status: true,
+//           },
+//         },
+
+//         _count: {
+//           select: {
+//             checklist_items: {
+//               where: {
+//                 deleted_at: null,
+//               },
+//             },
+
+//             attachments: {
+//               where: {
+//                 deleted_at: null,
+//               },
+//             },
+//           },
+//         },
+//       },
+
+//       orderBy,
+
+//       skip: offset,
+
+//       take: limit,
+//     }),
+
+//     prisma.task.count({
+//       where,
+//     }),
+//   ]);
+
+//   /**
+//    * Format response
+//    */
+//   const formattedTasks =
+//     tasks.map(
+//       (task) => ({
+//         id:
+//           task.id,
+
+//         organization_id:
+//           task.organization_id,
+
+//         project_id:
+//           task.project_id,
+
+//         title:
+//           task.title,
+
+//         description:
+//           task.description,
+
+//         due_date:
+//           task.due_date,
+
+//         priority:
+//           task.priority,
+
+//         status:
+//           task.status,
+
+//         created_by:
+//           task.created_by,
+
+//         updated_by:
+//           task.updated_by,
+
+//         created_at:
+//           task.created_at,
+
+//         updated_at:
+//           task.updated_at,
+
+//         project:
+//           task.project,
+
+//         checklistCount:
+//           task._count
+//             .checklist_items,
+
+//         attachmentCount:
+//           task._count
+//             .attachments,
+//       })
+//     );
+
+//   return {
+//     tasks:
+//       formattedTasks,
+
+//     total,
+//   };
+// };
+
+
+
+
+// const prisma = require("../config/prisma");
+
+/**
+ * Get task list
+ *
+ * Filters:
+ * - organization_id     (mandatory)
+ * - created_by          (optional)
+ * - search              (title / description)
+ * - project_id
+ * - status
+ * - priority
+ * - due_date_from
+ * - due_date_to
+ *
+ * Pagination:
+ * - limit
+ * - offset
+ *
+ * Sorting:
+ * - sortBy
+ * - sortOrder
+ */
 exports.getTaskList = async ({
   organization_id,
+
+  created_by,
 
   search,
 
@@ -323,7 +608,12 @@ exports.getTaskList = async ({
    * Base filter
    *
    * Organization isolation is mandatory.
+   *
+   * deleted_at ensures soft-deleted
+   * tasks are not returned.
    */
+
+  console.log('created by--', created_by);
   const where = {
     organization_id,
 
@@ -331,28 +621,38 @@ exports.getTaskList = async ({
   };
 
   /**
-   * Search by task title
-   * or description.
+   * Created By filter
+   *
+   * If created_by is provided,
+   * only return tasks created by
+   * that user.
+   */
+  if (
+    created_by !== undefined &&
+    created_by !== null &&
+    created_by !== ""
+  ) {
+    where.created_by = Number(created_by);
+  }
+
+  /**
+   * Search filter
+   *
+   * Search task title OR description.
    */
   if (search) {
     where.OR = [
       {
         title: {
-          contains:
-            search,
-
-          mode:
-            "insensitive",
+          contains: search,
+          mode: "insensitive",
         },
       },
 
       {
         description: {
-          contains:
-            search,
-
-          mode:
-            "insensitive",
+          contains: search,
+          mode: "insensitive",
         },
       },
     ];
@@ -361,25 +661,26 @@ exports.getTaskList = async ({
   /**
    * Project filter
    */
-  if (project_id) {
-    where.project_id =
-      project_id;
+  if (
+    project_id !== undefined &&
+    project_id !== null &&
+    project_id !== ""
+  ) {
+    where.project_id = Number(project_id);
   }
 
   /**
    * Status filter
    */
   if (status) {
-    where.status =
-      status;
+    where.status = status;
   }
 
   /**
    * Priority filter
    */
   if (priority) {
-    where.priority =
-      priority;
+    where.priority = priority;
   }
 
   /**
@@ -405,22 +706,25 @@ exports.getTaskList = async ({
   /**
    * Sorting
    *
-   * sortBy is already whitelisted
-   * by validator.
+   * sortBy should already be
+   * validated/whitelisted by the
+   * service validator.
    */
   const orderBy = {
-    [sortBy]:
-      sortOrder,
+    [sortBy]: sortOrder,
   };
 
   /**
-   * Fetch tasks and total
+   * Fetch tasks and total count
    * in parallel.
    */
   const [
     tasks,
     total,
   ] = await Promise.all([
+    /**
+     * Fetch paginated tasks
+     */
     prisma.task.findMany({
       where,
 
@@ -449,6 +753,9 @@ exports.getTaskList = async ({
 
         updated_at: true,
 
+        /**
+         * Project information
+         */
         project: {
           select: {
             id: true,
@@ -459,6 +766,9 @@ exports.getTaskList = async ({
           },
         },
 
+        /**
+         * Related counts
+         */
         _count: {
           select: {
             checklist_items: {
@@ -483,6 +793,9 @@ exports.getTaskList = async ({
       take: limit,
     }),
 
+    /**
+     * Total matching records
+     */
     prisma.task.count({
       where,
     }),
@@ -492,60 +805,58 @@ exports.getTaskList = async ({
    * Format response
    */
   const formattedTasks =
-    tasks.map(
-      (task) => ({
-        id:
-          task.id,
+    tasks.map((task) => ({
+      id: task.id,
 
-        organization_id:
-          task.organization_id,
+      organization_id:
+        task.organization_id,
 
-        project_id:
-          task.project_id,
+      project_id:
+        task.project_id,
 
-        title:
-          task.title,
+      title: task.title,
 
-        description:
-          task.description,
+      description:
+        task.description,
 
-        due_date:
-          task.due_date,
+      due_date:
+        task.due_date,
 
-        priority:
-          task.priority,
+      priority:
+        task.priority,
 
-        status:
-          task.status,
+      status:
+        task.status,
 
-        created_by:
-          task.created_by,
+      created_by:
+        task.created_by,
 
-        updated_by:
-          task.updated_by,
+      updated_by:
+        task.updated_by,
 
-        created_at:
-          task.created_at,
+      created_at:
+        task.created_at,
 
-        updated_at:
-          task.updated_at,
+      updated_at:
+        task.updated_at,
 
-        project:
-          task.project,
+      project:
+        task.project,
 
-        checklistCount:
-          task._count
-            .checklist_items,
+      checklistCount:
+        task._count
+          .checklist_items,
 
-        attachmentCount:
-          task._count
-            .attachments,
-      })
-    );
+      attachmentCount:
+        task._count
+          .attachments,
+    }));
 
+  /**
+   * Return result
+   */
   return {
-    tasks:
-      formattedTasks,
+    tasks: formattedTasks,
 
     total,
   };

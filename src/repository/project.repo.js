@@ -134,3 +134,80 @@ exports.getProjectList = async ({
     total,
   };
 };
+
+
+
+
+/**
+ * Find project by name
+ * within organization.
+ */
+exports.findByName =
+  async ({
+    organization_id,
+    name,
+  }) => {
+    return prisma.project.findFirst({
+      where: {
+        organization_id,
+
+        name: {
+          equals: name,
+
+          mode: "insensitive",
+        },
+
+        deleted_at: null,
+      },
+
+      select: {
+        id: true,
+
+        name: true,
+
+        organization_id: true,
+      },
+    });
+  };
+
+/**
+ * Create project
+ */
+exports.createProject =
+  async ({
+    organization_id,
+
+    name,
+
+    description,
+
+    status,
+  }) => {
+    return prisma.project.create({
+      data: {
+        organization_id,
+
+        name,
+
+        description,
+
+        status,
+      },
+
+      select: {
+        id: true,
+
+        organization_id: true,
+
+        name: true,
+
+        description: true,
+
+        status: true,
+
+        created_at: true,
+
+        updated_at: true,
+      },
+    });
+  };
