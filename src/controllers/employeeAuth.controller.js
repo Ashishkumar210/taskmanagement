@@ -161,3 +161,59 @@ exports.signin = asyncHandler(async (req, res) => {
     },
   });
 });
+
+
+
+
+
+// const asyncHandler =
+//   require("../../../utils/asyncHandler");
+
+// const UserService =
+//   require("./user.service");
+
+/**
+ * Get user list
+ */
+exports.getUserList =
+  asyncHandler(async (req, res) => {
+    const result =
+      await employeeAuthService.getUserList({
+        ...req.query,
+      });
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        "User list fetched successfully.",
+
+      data: result,
+    });
+  });
+
+
+/**
+ * Get user details
+ */
+exports.getUserDetails =
+  asyncHandler(async (req, res) => {
+    const userId =
+      req.user?.user_id ||
+      req.user?.userId || "1";
+
+    console.log('user id===', userId);
+    const result =
+      await employeeAuthService.getUserDetails(
+        userId
+      );
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        "User details fetched successfully.",
+
+      data: result,
+    });
+  });

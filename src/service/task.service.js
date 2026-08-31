@@ -643,3 +643,446 @@ exports.getTaskList = async ({
     },
   };
 };
+
+
+
+
+/**
+ * Get task details
+ */
+exports.getTaskDetails =
+  async ({
+    task_id,
+    organization_id,
+  }) => {
+    /**
+     * Organization validation
+     */
+    if (!organization_id) {
+      throw new BadRequestError(
+        "Organization is required."
+      );
+    }
+
+    /**
+     * Validate task ID
+     */
+    // const taskId =
+    //   validateTaskId(task_id);
+
+    /**
+     * Get task
+     */
+    const task =
+      await TaskRepo.getTaskDetails({
+        task_id: task_id,
+
+        organization_id,
+      });
+
+    if (!task) {
+      throw new NotFoundError(
+        "Task not found."
+      );
+    }
+
+    /**
+     * Checklist statistics
+     */
+    const checklist =
+      task.checklist_items || [];
+
+    const totalChecklistItems =
+      checklist.length;
+
+    const completedChecklistItems =
+      checklist.filter(
+        (item) =>
+          item.is_completed === true
+      ).length;
+
+    /**
+     * Progress
+     *
+     * Currently your schema doesn't
+     * contain a progress column.
+     *
+     * Therefore progress is calculated
+     * from checklist completion.
+     */
+    const progress =
+      totalChecklistItems > 0
+        ? Math.round(
+          (completedChecklistItems /
+            totalChecklistItems) *
+          100
+        )
+        : task.status ===
+          "COMPLETED"
+          ? 100
+          : 0;
+
+    /**
+     * Format checklist
+     */
+    const checklistItems =
+      checklist.map(
+        (item) => ({
+          id:
+            item.id,
+
+          title:
+            item.title,
+
+          isCompleted:
+            item.is_completed,
+
+          createdAt:
+            item.created_at,
+
+          updatedAt:
+            item.updated_at,
+        })
+      );
+
+    /**
+     * Format attachments
+     */
+    const attachments =
+      (task.attachments || []).map(
+        (attachment) => ({
+          id:
+            attachment.id,
+
+          fileName:
+            attachment.file_name,
+
+          fileUrl:
+            attachment.file_url,
+
+          fileSize:
+            Number(
+              attachment.file_size
+            ),
+
+          mimeType:
+            attachment.mime_type,
+
+          uploadedBy:
+            attachment.uploaded_by,
+
+          createdAt:
+            attachment.created_at,
+
+          updatedAt:
+            attachment.updated_at,
+        })
+      );
+
+    /**
+     * Format activity
+     */
+    const activity =
+      (task.activity_logs || []).map(
+        (item) => ({
+          id:
+            item.id,
+
+          userId:
+            item.user_id,
+
+          action:
+            item.action,
+
+          oldValue:
+            item.old_value,
+
+          newValue:
+            item.new_value,
+
+          metadata:
+            item.metadata,
+
+          createdAt:
+            item.created_at,
+        })
+      );
+
+    return {
+      id:
+        task.id,
+
+      organizationId:
+        task.organization_id,
+
+      title:
+        task.title,
+
+      description:
+        task.description,
+
+      status:
+        task.status,
+
+      priority:
+        task.priority,
+
+      startDate:
+        task.created_at,
+
+      dueDate:
+        task.due_date,
+
+      project: task.project
+        ? {
+          id:
+            task.project.id,
+
+          name:
+            task.project.name,
+
+          description:
+            task.project
+              .description,
+
+          status:
+            task.project.status,
+        }
+        : null,
+
+      /**
+       * Currently created_by represents
+       * the person who created/assigned
+       * the task.
+       */
+      assignedBy:
+        task.created_by,
+
+      createdBy:
+        task.created_by,
+
+      updatedBy:
+        task.updated_by,
+
+      progress,
+
+      checklist: {
+        total:
+          totalChecklistItems,
+
+        completed:
+          completedChecklistItems,
+
+        remaining:
+          totalChecklistItems -
+          completedChecklistItems,
+
+        items:
+          checklistItems,
+      },
+
+      attachments,
+
+      activity,
+
+      /**
+       * Comment table is not yet
+       * present in your schema.
+       */
+      commentsCount: 0,
+
+      createdAt:
+        task.created_at,
+
+      updatedAt:
+        task.updated_at,
+    };
+  };
+
+
+
+
+
+/**
+ * Update task status
+ */
+exports.updateTaskStatus = async ({
+  task_id,
+
+  organization_id,
+
+  user_id,
+
+  status,
+}) => {
+  /**
+   * Validate authentication
+   */
+  if (!user_id) {
+    throw new BadRequestError(
+      "Authenticated user is required."
+    );
+  }
+
+  const normalizedUserId =
+    Number(user_id);
+
+  if (
+    !Number.isInteger(
+      normalizedUserId
+    ) ||
+    normalizedUserId <= 0
+  ) {
+    throw new BadRequestError(
+      "Invalid authenticated user."
+    );
+  }
+
+  /**
+   * Validate organization
+   */
+  if (!organization_id) {
+    throw new BadRequestError(
+      "Organization is required."
+    );
+  }
+
+  const normalizedOrganizationId =
+    Number(organization_id);
+
+  if (
+    !Number.isInteger(
+      normalizedOrganizationId
+    ) ||
+    normalizedOrganizationId <= 0
+  ) {
+    throw new BadRequestError(
+      "Invalid organization."
+    );
+  }
+
+  /**
+   * Validate task ID
+   */
+  // const taskId =
+  //   validateTaskId(task_id);
+
+  /**
+   * Validate status
+   */
+  // const newStatus =
+  //   validateTaskStatus(status);
+
+  /**
+   * Find task
+   */
+  const task =
+    await TaskRepo.findTaskById({
+      task_id: task_id,
+
+      organization_id:
+        normalizedOrganizationId,
+    });
+
+  if (!task) {
+    throw new NotFoundError(
+      "Task not found."
+    );
+  }
+
+  /**
+   * No change required
+   */
+  if (
+    task.status === status
+  ) {
+    return {
+      task,
+
+      statusChanged: false,
+
+      previousStatus:
+        task.status,
+
+      currentStatus:
+        task.status,
+    };
+  }
+
+  /**
+   * Update task + activity log
+   */
+  let updatedTask;
+
+  try {
+    updatedTask =
+      await TaskRepo.updateTaskStatus({
+        task_id: task_id,
+
+        organization_id:
+          normalizedOrganizationId,
+
+        user_id:
+          normalizedUserId,
+
+        old_status:
+          task.status,
+
+        new_status:
+          status,
+      });
+  } catch (error) {
+    /**
+     * Concurrent update
+     */
+    if (
+      error.message ===
+      "Task status was changed by another request."
+    ) {
+      throw new ConflictError(
+        "Task status was changed by another request. Please refresh and try again."
+      );
+    }
+
+    throw error;
+  }
+
+  /**
+   * Notification hook
+   *
+   * Later connect this with:
+   *
+   * BullMQ
+   * Kafka
+   * Notification Service
+   *
+   * Do not make notification failure
+   * rollback the task transaction.
+   */
+  try {
+    // await NotificationService.taskStatusChanged({
+    //   taskId: updatedTask.id,
+    //   organizationId: normalizedOrganizationId,
+    //   changedBy: normalizedUserId,
+    //   previousStatus: task.status,
+    //   currentStatus: newStatus,
+    // });
+  } catch (error) {
+    console.error(
+      "Task status notification failed:",
+      error
+    );
+  }
+
+  return {
+    task: updatedTask,
+
+    statusChanged: true,
+
+    previousStatus:
+      task.status,
+
+    currentStatus:
+      status,
+  };
+};

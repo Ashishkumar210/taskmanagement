@@ -89,4 +89,18 @@ router.get(
   TaskController.getTaskList
 );
 
+
+router.get(
+  "/:id/status",
+  authMiddleware,
+  TaskController.getTaskDetails
+);
+
+
+router.post(
+  "/:id/update/status",
+  authMiddleware,
+  TaskController.updateTaskStatus
+);
+
 module.exports = router;

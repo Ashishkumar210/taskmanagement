@@ -861,3 +861,314 @@ exports.getTaskList = async ({
     total,
   };
 };
+
+
+
+/**
+ * Get task details
+ */
+exports.getTaskDetails =
+  async ({
+    task_id,
+    organization_id,
+  }) => {
+    const task =
+      await prisma.task.findFirst({
+        where: {
+          id: task_id,
+
+          organization_id,
+
+          deleted_at: null,
+        },
+
+        select: {
+          id: true,
+
+          organization_id: true,
+
+          project_id: true,
+
+          title: true,
+
+          description: true,
+
+          due_date: true,
+
+          priority: true,
+
+          status: true,
+
+          created_by: true,
+
+          updated_by: true,
+
+          created_at: true,
+
+          updated_at: true,
+
+          /**
+           * Project
+           */
+          project: {
+            select: {
+              id: true,
+
+              name: true,
+
+              description: true,
+
+              status: true,
+            },
+          },
+
+          /**
+           * Checklist
+           */
+          checklist_items: {
+            where: {
+              deleted_at: null,
+            },
+
+            select: {
+              id: true,
+
+              title: true,
+
+              is_completed: true,
+
+              created_at: true,
+
+              updated_at: true,
+            },
+
+            orderBy: {
+              id: "asc",
+            },
+          },
+
+          /**
+           * Attachments
+           */
+          attachments: {
+            where: {
+              deleted_at: null,
+            },
+
+            select: {
+              id: true,
+
+              file_name: true,
+
+              file_url: true,
+
+              file_size: true,
+
+              mime_type: true,
+
+              uploaded_by: true,
+
+              created_at: true,
+
+              updated_at: true,
+            },
+
+            orderBy: {
+              created_at: "desc",
+            },
+          },
+
+          /**
+           * Activity
+           */
+          activity_logs: {
+            where: {
+              deleted_at: null,
+            },
+
+            select: {
+              id: true,
+
+              user_id: true,
+
+              action: true,
+
+              old_value: true,
+
+              new_value: true,
+
+              metadata: true,
+
+              created_at: true,
+            },
+
+            orderBy: {
+              created_at: "desc",
+            },
+
+            take: 100,
+          },
+        },
+      });
+
+    return task;
+  };
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+* Find task by ID
+*
+* Organization isolation is applied here.
+*/
+exports.findTaskById =
+  async ({
+    task_id,
+    organization_id,
+  }) => {
+    return prisma.task.findFirst({
+      where: {
+        id: task_id,
+
+        organization_id,
+
+        deleted_at: null,
+      },
+
+      select: {
+        id: true,
+
+        organization_id: true,
+
+        project_id: true,
+
+        title: true,
+
+        description: true,
+
+        due_date: true,
+
+        priority: true,
+
+        status: true,
+
+        created_by: true,
+
+        updated_by: true,
+
+        created_at: true,
+
+        updated_at: true,
+      },
+    });
+  };
+
+
+/**
+ * Update task status + activity log
+ *
+ * Both operations happen inside
+ * one database transaction.
+ */
+exports.updateTaskStatus =
+  async ({
+    task_id,
+
+    organization_id,
+
+    user_id,
+
+    old_status,
+
+    new_status,
+  }) => {
+    return prisma.$transaction(
+      async (tx) => {
+        /**
+         * Update task
+         */
+        const task =
+          await tx.task.update({
+            where: {
+              id: task_id,
+            },
+
+            data: {
+              status:
+                new_status,
+
+              updated_by:
+                user_id,
+            },
+
+            select: {
+              id: true,
+
+              organization_id: true,
+
+              project_id: true,
+
+              title: true,
+
+              description: true,
+
+              due_date: true,
+
+              priority: true,
+
+              status: true,
+
+              created_by: true,
+
+              updated_by: true,
+
+              created_at: true,
+
+              updated_at: true,
+            },
+          });
+
+        /**
+         * Activity log
+         */
+        await tx.taskActivityLog.create({
+          data: {
+            task_id,
+
+            organization_id,
+
+            user_id,
+
+            action:
+              "STATUS_CHANGED",
+
+            old_value: {
+              status:
+                old_status,
+            },
+
+            new_value: {
+              status:
+                new_status,
+            },
+
+            metadata: {
+              source:
+                "TASK_STATUS_UPDATE",
+            },
+          },
+        });
+
+        return task;
+      }
+    );
+  };

@@ -3,6 +3,7 @@ const express =
 
 const employeeAuthController =
   require("../controllers/employeeAuth.controller");
+const authMiddleware = require("../middlewares/auth.middleware");
 
 const router =
   express.Router();
@@ -22,6 +23,18 @@ router.post(
 router.post(
   "/signin",
   employeeAuthController.signin
+);
+
+
+router.get(
+  "/details",
+  authMiddleware,
+  employeeAuthController.getUserDetails
+);
+
+router.get(
+  "/list",
+  employeeAuthController.getUserList
 );
 
 module.exports = router;

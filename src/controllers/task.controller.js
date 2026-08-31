@@ -114,3 +114,97 @@ exports.getTaskList = asyncHandler(
     });
   }
 );
+
+
+
+
+/**
+ * Get task details
+ */
+exports.getTaskDetails =
+  asyncHandler(
+    async (req, res) => {
+      const taskId = Number(req.params.id);
+
+      const task_id =
+        taskId;
+
+      const organization_id =
+        req.user?.organization_id ?? 1;
+
+      const result =
+        await TaskService.getTaskDetails({
+          task_id,
+
+          organization_id,
+        });
+
+      return res.status(200).json({
+        success: true,
+
+        message:
+          "Task details fetched successfully.",
+
+        data: result,
+      });
+    }
+  );
+
+
+
+
+
+
+/**
+ * Update task status
+ */
+exports.updateTaskStatus =
+  asyncHandler(
+    async (req, res) => {
+      // const {
+      //   id,
+      // } = req.params;
+
+      const id = Number(req.params.id);
+
+      const {
+        status,
+      } = req.body;
+
+      /**
+       * Depending on your JWT middleware,
+       * use the property that contains
+       * the authenticated user ID.
+       */
+      const user_id =
+        req.user?.user_id ||
+        req.user?.userId ||
+        req.user?.id;
+
+      const organization_id =
+        req.user?.organization_id ||
+        req.user?.organizationId || 1;
+
+      const result =
+        await TaskService.updateTaskStatus({
+          task_id: id,
+
+          organization_id,
+
+          user_id,
+
+          status,
+        });
+
+      return res.status(200).json({
+        success: true,
+
+        message:
+          result.statusChanged
+            ? "Task status updated successfully."
+            : "Task is already in this status.",
+
+        data: result,
+      });
+    }
+  );

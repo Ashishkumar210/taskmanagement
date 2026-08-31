@@ -346,6 +346,290 @@ const updateLastLogin = async (userId) => {
   });
 };
 
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * Get user list
+ */
+const getUserList =
+  async ({
+    search,
+
+    status,
+
+    departmentId,
+
+    limit,
+
+    offset,
+
+    sortBy,
+
+    sortOrder,
+  }) => {
+    const where = {
+      /**
+       * Soft delete
+       */
+      deletedAt: null,
+    };
+
+    /**
+     * Search
+     */
+    if (search) {
+      where.OR = [
+        {
+          firstName: {
+            contains:
+              search,
+
+            mode:
+              "insensitive",
+          },
+        },
+
+        {
+          lastName: {
+            contains:
+              search,
+
+            mode:
+              "insensitive",
+          },
+        },
+
+        {
+          email: {
+            contains:
+              search,
+
+            mode:
+              "insensitive",
+          },
+        },
+
+        {
+          employeeCode: {
+            contains:
+              search,
+
+            mode:
+              "insensitive",
+          },
+        },
+      ];
+    }
+
+    /**
+     * Status
+     */
+    if (status) {
+      where.status =
+        status;
+    }
+
+    /**
+     * Department
+     */
+    if (departmentId) {
+      where.departmentId =
+        departmentId;
+    }
+
+    /**
+     * Sorting
+     */
+    const orderBy = {
+      [sortBy]:
+        sortOrder,
+    };
+
+    /**
+     * Fetch users + count
+     */
+    const [
+      users,
+      total,
+    ] = await Promise.all([
+      prisma.user.findMany({
+        where,
+
+        select: {
+          id: true,
+
+          firstName: true,
+
+          lastName: true,
+
+          email: true,
+
+          mobileNo: true,
+
+          employeeCode: true,
+
+          emailVerified: true,
+
+          mobileVerified: true,
+
+          status: true,
+
+          lastLoginAt: true,
+
+          departmentId: true,
+
+          createdAt: true,
+
+          updatedAt: true,
+
+          department: {
+            select: {
+              id: true,
+
+              name: true,
+
+              code: true,
+            },
+          },
+        },
+
+        orderBy,
+
+        skip: offset,
+
+        take: limit,
+      }),
+
+      prisma.user.count({
+        where,
+      }),
+    ]);
+
+    /**
+     * Format response
+     */
+    const formattedUsers =
+      users.map(
+        (user) => ({
+          id:
+            user.id,
+
+          firstName:
+            user.firstName,
+
+          lastName:
+            user.lastName,
+
+          fullName:
+            [
+              user.firstName,
+              user.lastName,
+            ]
+              .filter(Boolean)
+              .join(" "),
+
+          email:
+            user.email,
+
+          mobileNo:
+            user.mobileNo,
+
+          employeeCode:
+            user.employeeCode,
+
+          emailVerified:
+            user.emailVerified,
+
+          mobileVerified:
+            user.mobileVerified,
+
+          status:
+            user.status,
+
+          lastLoginAt:
+            user.lastLoginAt,
+
+          department:
+            user.department,
+
+          createdAt:
+            user.createdAt,
+
+          updatedAt:
+            user.updatedAt,
+        })
+      );
+
+    return {
+      users:
+        formattedUsers,
+
+      total,
+    };
+  };
+
+
+/**
+ * Find user by ID
+ */
+const findUserById =
+  async (id) => {
+    return prisma.user.findFirst({
+      where: {
+        id,
+
+        deletedAt: null,
+      },
+
+      select: {
+        id: true,
+
+        firstName: true,
+
+        lastName: true,
+
+        email: true,
+
+        mobileNo: true,
+
+        employeeCode: true,
+
+        emailVerified: true,
+
+        mobileVerified: true,
+
+        status: true,
+
+        lastLoginAt: true,
+
+        createdAt: true,
+
+        updatedAt: true,
+
+        departmentId: true,
+
+        department: {
+          select: {
+            id: true,
+
+            name: true,
+
+            code: true,
+          },
+        },
+      },
+    });
+  };
 module.exports = {
   findByEmail,
   findByEmployeeCode,
@@ -354,4 +638,7 @@ module.exports = {
   findById,
   findByEmailForLogin,
   updateLastLogin,
+  getUserList,
+  findUserById
+
 };

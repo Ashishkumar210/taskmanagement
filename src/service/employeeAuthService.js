@@ -11,6 +11,11 @@ const jwt = require("jsonwebtoken");
 const employeeAuthRepository = require("../repository/employeeAuthRepository");
 const { config } = require('../config');
 
+
+const {
+  validateUserId
+} = require("../utils/user.validator");
+
 /**
  * Normalize email
  */
@@ -470,3 +475,175 @@ exports.signin = async ({
     },
   };
 };
+
+
+
+
+// const {
+//   NotFoundError,
+// } = require("../../../utils/error");
+
+// const UserRepo =
+//   require("./user.repo");
+
+// const {
+//   validateUserListQuery,
+//   validateUserId,
+// } = require("./user.validator");
+
+
+/**
+ * Get user list
+ */
+exports.getUserList =
+  async ({
+    page = 1,
+
+    limit = 20,
+
+    search,
+
+    status,
+
+    departmentId,
+
+    sortBy = "createdAt",
+
+    sortOrder = "desc",
+  }) => {
+    /**
+     * Validate query
+     */
+    const validated =
+      validateUserListQuery({
+        page,
+
+        limit,
+
+        search,
+
+        status,
+
+        departmentId,
+
+        sortBy,
+
+        sortOrder,
+      });
+
+    const {
+      page: currentPage,
+
+      limit: pageLimit,
+
+      search: searchText,
+
+      status: userStatus,
+
+      departmentId:
+      normalizedDepartmentId,
+
+      sortBy: orderByField,
+
+      sortOrder:
+      orderByDirection,
+    } = validated;
+
+    /**
+     * Offset
+     */
+    const offset =
+      (currentPage - 1) *
+      pageLimit;
+
+    /**
+     * Fetch users
+     */
+    const {
+      users,
+
+      total,
+    } =
+      await UserRepo.getUserList({
+        search:
+          searchText,
+
+        status:
+          userStatus,
+
+        departmentId:
+          normalizedDepartmentId,
+
+        limit:
+          pageLimit,
+
+        offset,
+
+        sortBy:
+          orderByField,
+
+        sortOrder:
+          orderByDirection,
+      });
+
+    const totalPages =
+      Math.ceil(
+        total / pageLimit
+      );
+
+    return {
+      items: users,
+
+      pagination: {
+        page:
+          currentPage,
+
+        limit:
+          pageLimit,
+
+        total,
+
+        totalPages,
+
+        hasNextPage:
+          currentPage <
+          totalPages,
+
+        hasPreviousPage:
+          currentPage > 1,
+      },
+    };
+  };
+
+
+/**
+ * Get user details
+ */
+exports.getUserDetails =
+  async (id) => {
+
+    console.log('user id===', id);
+    /**
+     * Validate UUID
+     */
+    // const userId =
+    //   validateUserId(id);
+
+    const userId = id;
+
+    /**
+     * Find user
+     */
+    const user =
+      await employeeAuthRepository.findUserById(
+        userId
+      );
+
+    if (!user) {
+      throw new NotFoundError(
+        "User not found."
+      );
+    }
+
+    return user;
+  };
