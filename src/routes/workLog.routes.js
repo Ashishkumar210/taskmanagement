@@ -34,4 +34,14 @@ router.post(
   WorkLogController.createWorkLog
 );
 
+
+
+router.get(
+  "/daily-logs",
+
+  authMiddleware,
+
+  WorkLogController.getDailyWorkLogs
+);
+
 module.exports = router;

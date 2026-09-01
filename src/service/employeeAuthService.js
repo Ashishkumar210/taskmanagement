@@ -4,7 +4,9 @@ const {
   BadRequestError,
   ConflictError,
 } = require("../utils/error");
-
+const {
+  validateUserListQuery
+} = require("../utils/user.validator");
 
 const jwt = require("jsonwebtoken");
 
@@ -564,7 +566,7 @@ exports.getUserList =
 
       total,
     } =
-      await UserRepo.getUserList({
+      await employeeAuthRepository.getUserList({
         search:
           searchText,
 

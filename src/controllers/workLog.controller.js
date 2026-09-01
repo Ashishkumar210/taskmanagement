@@ -45,3 +45,68 @@ exports.createWorkLog =
       data: result,
     });
   });
+
+
+
+
+
+
+/**
+* Get Daily Work Logs
+*
+* GET /api/v1/adminlog
+*
+* Examples:
+*
+* /api/v1/adminlog
+* /api/v1/adminlog?userId=5
+* /api/v1/adminlog?userId=5&projectId=10
+* /api/v1/adminlog?userId=5&projectId=10&taskId=101
+* /api/v1/adminlog?userId=5&page=1&limit=10
+*/
+exports.getDailyWorkLogs = asyncHandler(
+  async (req, res) => {
+    const {
+      userId,
+      projectId,
+      taskId,
+      page,
+      limit,
+      fromDate,
+      toDate,
+    } = req.query;
+
+    /**
+     * Organization ID should come
+     * from authenticated user/admin.
+     */
+    const organizationId =
+      req.user?.organization_id ||
+      req.user?.organizationId || 1;
+
+    if (!organizationId) {
+      throw new BadRequestError(
+        "Organization ID is required."
+      );
+    }
+
+    const result =
+      await WorkLogService.getDailyWorkLogs({
+        organizationId,
+        userId,
+        projectId,
+        taskId,
+        page,
+        limit,
+        fromDate,
+        toDate,
+      });
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Daily work logs fetched successfully.",
+      data: result,
+    });
+  }
+);

@@ -133,15 +133,28 @@ exports.createWorkLog = async ({
    * Remove this check if you want
    * multiple work logs per day.
    */
+  // const existing =
+  //   await WorkLogRepo.findByUserAndDate({
+  //     user_id,
+
+  //     organization_id,
+
+  //     log_date:
+  //       validated.logDate,
+  //   });
   const existing =
-    await WorkLogRepo.findByUserAndDate({
+    await WorkLogRepo.findByUserAndDateAndProject({
       user_id,
-
       organization_id,
-
-      log_date:
-        validated.logDate,
+      project_id: validated.projectId,
+      log_date: validated.logDate,
     });
+
+  if (existing) {
+    throw new ConflictError(
+      "You have already submitted a work log for this project on this date."
+    );
+  }
 
   if (existing) {
     throw new ConflictError(
@@ -219,4 +232,300 @@ exports.createWorkLog = async ({
 
     organization_id,
   });
+};
+
+
+
+
+
+
+
+
+/**
+ * Convert query parameter into
+ * positive integer.
+ */
+const parsePositiveInteger = (
+  value,
+  fieldName
+) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+
+  if (
+    !Number.isInteger(parsedValue) ||
+    parsedValue <= 0
+  ) {
+    throw new BadRequestError(
+      `${fieldName} must be a positive integer.`
+    );
+  }
+
+  return parsedValue;
+};
+
+/**
+ * Validate pagination.
+ */
+const parsePagination = ({
+  page,
+  limit,
+}) => {
+  let parsedPage = 1;
+  let parsedLimit = 10;
+
+  if (
+    page !== undefined &&
+    page !== ""
+  ) {
+    parsedPage = parsePositiveInteger(
+      page,
+      "page"
+    );
+  }
+
+  if (
+    limit !== undefined &&
+    limit !== ""
+  ) {
+    parsedLimit = parsePositiveInteger(
+      limit,
+      "limit"
+    );
+  }
+
+  if (parsedLimit > 100) {
+    throw new BadRequestError(
+      "limit cannot be greater than 100."
+    );
+  }
+
+  return {
+    page: parsedPage || 1,
+    limit: parsedLimit || 10,
+  };
+};
+
+/**
+ * Validate date.
+ *
+ * Expected:
+ * YYYY-MM-DD
+ */
+const parseDate = (
+  value,
+  fieldName
+) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(value)
+  ) {
+    throw new BadRequestError(
+      `${fieldName} must be in YYYY-MM-DD format.`
+    );
+  }
+
+  const date = new Date(
+    `${value}T00:00:00.000Z`
+  );
+
+  if (Number.isNaN(date.getTime())) {
+    throw new BadRequestError(
+      `Invalid ${fieldName}.`
+    );
+  }
+
+  return date;
+};
+
+/**
+ * Get Daily Work Logs
+ */
+exports.getDailyWorkLogs = async ({
+  organizationId,
+  userId,
+  projectId,
+  taskId,
+  page,
+  limit,
+  fromDate,
+  toDate,
+}) => {
+  /**
+   * Organization
+   */
+  const normalizedOrganizationId =
+    parsePositiveInteger(
+      organizationId,
+      "organizationId"
+    );
+
+  if (!normalizedOrganizationId) {
+    throw new BadRequestError(
+      "Organization ID is required."
+    );
+  }
+
+  /**
+   * Optional filters
+   */
+  const normalizedUserId =
+    parsePositiveInteger(
+      userId,
+      "userId"
+    );
+
+  const normalizedProjectId =
+    parsePositiveInteger(
+      projectId,
+      "projectId"
+    );
+
+  const normalizedTaskId =
+    parsePositiveInteger(
+      taskId,
+      "taskId"
+    );
+
+  /**
+   * Pagination
+   */
+  const pagination =
+    parsePagination({
+      page,
+      limit,
+    });
+
+  /**
+   * Date filters
+   */
+  const startDate =
+    parseDate(
+      fromDate,
+      "fromDate"
+    );
+
+  let endDate =
+    parseDate(
+      toDate,
+      "toDate"
+    );
+
+  /**
+   * Repository uses:
+   *
+   * log_date >= startDate
+   * log_date < endDate
+   *
+   * So make toDate exclusive.
+   */
+  if (endDate) {
+    endDate = new Date(endDate);
+
+    endDate.setUTCDate(
+      endDate.getUTCDate() + 1
+    );
+  }
+
+  /**
+   * Validate date range
+   */
+  if (
+    startDate &&
+    endDate &&
+    startDate >= endDate
+  ) {
+    throw new BadRequestError(
+      "fromDate must be before toDate."
+    );
+  }
+
+  /**
+   * Fetch from repository
+   */
+  const result =
+    await WorkLogRepo.getDailyWorkLogs({
+      organizationId:
+        normalizedOrganizationId,
+
+      userId:
+        normalizedUserId,
+
+      projectId:
+        normalizedProjectId,
+
+      taskId:
+        normalizedTaskId,
+
+      page:
+        pagination.page,
+
+      limit:
+        pagination.limit,
+
+      startDate,
+
+      endDate,
+    });
+
+  /**
+   * Pagination calculation
+   */
+  const totalPages =
+    Math.ceil(
+      result.total /
+      pagination.limit
+    );
+
+  return {
+    items: result.items,
+
+    pagination: {
+      page: pagination.page,
+
+      limit: pagination.limit,
+
+      total: result.total,
+
+      totalPages,
+
+      hasNextPage:
+        pagination.page <
+        totalPages,
+
+      hasPreviousPage:
+        pagination.page > 1,
+    },
+
+    filters: {
+      userId:
+        normalizedUserId,
+
+      projectId:
+        normalizedProjectId,
+
+      taskId:
+        normalizedTaskId,
+
+      fromDate:
+        fromDate || null,
+
+      toDate:
+        toDate || null,
+    },
+  };
 };
