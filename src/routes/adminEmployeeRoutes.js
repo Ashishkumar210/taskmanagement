@@ -30,4 +30,14 @@ router.get(
   adminEmployeeController.getEmployeeTasks
 );
 
+
+
+
+
+router.get(
+  "/task-list",
+  authMiddleware,
+  adminEmployeeController.getMyTasks
+);
+
 module.exports = router;

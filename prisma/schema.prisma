@@ -36,6 +36,8 @@ model User {
 
   dailyWorkLogs DailyWorkLog[]
 
+  overtimeTasks OvertimeTask[]
+
   @@map("users")
 }
 
@@ -69,6 +71,8 @@ model Project {
   tasks           Task[]
   daily_work_logs DailyWorkLog[]
 
+  overtime_tasks OvertimeTask[]
+
   @@index([organization_id])
   @@index([organization_id, status])
 }
@@ -98,6 +102,8 @@ model Task {
   attachments     TaskAttachment[]
   activity_logs   TaskActivityLog[]
   work_logs       DailyWorkLog[]
+
+  overtime_tasks OvertimeTask[]
 
   @@index([organization_id, deleted_at])
   @@index([organization_id, project_id])
@@ -226,6 +232,49 @@ model DailyWorkLogAttachment {
   @@index([organization_id])
   @@index([uploaded_by])
   @@map("daily_work_log_attachments")
+}
+
+model OvertimeTask {
+  id Int @id @default(autoincrement())
+
+  organization_id Int
+
+  task_id    Int?
+  project_id Int?
+  user_id    Int
+
+  title       String  @db.VarChar(255)
+  description String? @db.Text
+
+  overtime_date DateTime @db.Date
+
+  estimated_hours Decimal? @db.Decimal(5, 2)
+  actual_hours    Decimal? @db.Decimal(5, 2)
+
+  priority TaskPriority @default(MEDIUM)
+  status   TaskStatus   @default(PENDING)
+
+  reason String? @db.Text
+
+  created_by Int
+  updated_by Int?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  deleted_at DateTime?
+  deleted_by Int?
+
+  task    Task?    @relation(fields: [task_id], references: [id])
+  project Project? @relation(fields: [project_id], references: [id])
+  user    User     @relation(fields: [user_id], references: [id])
+
+  @@index([organization_id, deleted_at])
+  @@index([organization_id, user_id])
+  @@index([organization_id, project_id])
+  @@index([organization_id, task_id])
+  @@index([organization_id, overtime_date])
+  @@index([organization_id, status])
 }
 
 enum UserStatus {

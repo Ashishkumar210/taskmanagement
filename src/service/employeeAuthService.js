@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 
 const {
   BadRequestError,
-  ConflictError,
+  ConflictError, UnauthorizedError,
 } = require("../utils/error");
 const {
   validateUserListQuery

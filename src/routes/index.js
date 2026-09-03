@@ -10,6 +10,7 @@ const projectRoutes = require("./project.routes");
 
 const workerLogsRoutes = require("./workLog.routes");
 const adminEmployeeRoutes = require("./adminEmployeeRoutes");
+const overtimeRoutes = require("./overtimeTask.routes");
 
 router.use("/auths", empAuthRoutes);
 router.use("/task", taskRoutes);
@@ -20,4 +21,6 @@ router.use("/project", projectRoutes);
 router.use("/worklog", workerLogsRoutes);
 
 router.use("/adminlog", adminEmployeeRoutes);
+
+router.use("/overtime", overtimeRoutes);
 module.exports = router;

@@ -72,3 +72,73 @@ exports.getEmployeeTasks =
       });
     }
   );
+
+
+
+
+
+
+/**
+ * Get My Tasks
+ *
+ * GET /api/v1/tasks/my-tasks
+ */
+exports.getMyTasks = asyncHandler(async (req, res) => {
+  const {
+    userId,
+    projectId,
+    status,
+    priority,
+    search,
+    page,
+    limit,
+  } = req.query;
+
+  /**
+   * Organization should come
+   * from authenticated user.
+   */
+  const organizationId =
+    req.user?.organization_id ||
+    req.user?.organizationId || 1;
+
+  if (!organizationId) {
+    throw new BadRequestError(
+      "Organization ID is required."
+    );
+  }
+
+  if (!userId) {
+    throw new BadRequestError(
+      "userId is required."
+    );
+  }
+
+  const result =
+    await service.getMyTasks({
+      organizationId,
+
+      userId,
+
+      projectId,
+
+      status,
+
+      priority,
+
+      search,
+
+      page,
+
+      limit,
+    });
+
+  return res.status(200).json({
+    success: true,
+
+    message:
+      "Tasks fetched successfully.",
+
+    data: result,
+  });
+});

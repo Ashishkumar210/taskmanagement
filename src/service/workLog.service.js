@@ -10,6 +10,8 @@ const {
   validateCreateWorkLog,
 } = require("../utils/workLog.validator");
 
+const logger = require("../config/logger");
+
 exports.createWorkLog = async ({
   organization_id,
   user_id,
@@ -61,6 +63,14 @@ exports.createWorkLog = async ({
       blockers,
     });
 
+
+  logger.info("Work log validation completed", {
+    organizationId: organization_id,
+    userId: user_id,
+    taskId: validated.taskId,
+    projectId: validated.projectId,
+    logDate: validated.logDate,
+  });
   /**
    * Validate task and project
    * inside the same organization.
@@ -73,13 +83,21 @@ exports.createWorkLog = async ({
 
         organization_id,
       });
-
+    logger.info("Task validation completed", {
+      task,
+      organizationId: organization_id,
+      taskId: validated.taskId,
+    });
+    // if (!task) {
+    //   throw new BadRequestError(
+    //     "Selected task is invalid."
+    //   );
+    // }
     if (!task) {
       throw new BadRequestError(
-        "Selected task is invalid."
+        `Task ${validated.taskId} does not exist or does not belong to this organization.`
       );
     }
-
     /**
      * If project was not explicitly
      * selected, use task's project.

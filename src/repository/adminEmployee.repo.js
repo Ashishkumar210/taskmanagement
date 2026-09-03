@@ -329,3 +329,208 @@ exports.getEmployeeTasks = async ({
     total,
   };
 };
+
+
+
+
+
+
+/**
+ * Get tasks created by user
+ */
+exports.getMyTasks = async ({
+  organizationId,
+  userId,
+  projectId,
+  status,
+  priority,
+  search,
+  page,
+  limit,
+}) => {
+  const skip = (page - 1) * limit;
+
+  const where = {
+    organization_id: organizationId,
+    created_by: userId,
+    deleted_at: null,
+  };
+
+  /**
+   * Project filter
+   */
+  if (projectId) {
+    where.project_id = projectId;
+  }
+
+  /**
+   * Status filter
+   */
+  if (status) {
+    where.status = status;
+  }
+
+  /**
+   * Priority filter
+   */
+  if (priority) {
+    where.priority = priority;
+  }
+
+  /**
+   * Search by task title
+   */
+  if (search) {
+    where.title = {
+      contains: search,
+      mode: "insensitive",
+    };
+  }
+
+  const [total, tasks] =
+    await prisma.$transaction([
+      /**
+       * Total
+       */
+      prisma.task.count({
+        where,
+      }),
+
+      /**
+       * Tasks
+       */
+      prisma.task.findMany({
+        where,
+
+        skip,
+        take: limit,
+
+        orderBy: {
+          created_at: "desc",
+        },
+
+        select: {
+          id: true,
+
+          organization_id: true,
+
+          project_id: true,
+
+          title: true,
+
+          description: true,
+
+          due_date: true,
+
+          priority: true,
+
+          status: true,
+
+          created_by: true,
+
+          updated_by: true,
+
+          created_at: true,
+
+          updated_at: true,
+
+          /**
+           * Project
+           */
+          project: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              status: true,
+            },
+          },
+
+          /**
+           * Checklist
+           */
+          checklist_items: {
+            where: {
+              deleted_at: null,
+            },
+
+            orderBy: {
+              created_at: "asc",
+            },
+
+            select: {
+              id: true,
+              title: true,
+              is_completed: true,
+              created_at: true,
+              updated_at: true,
+            },
+          },
+
+          /**
+           * Attachments
+           */
+          attachments: {
+            where: {
+              deleted_at: null,
+            },
+
+            orderBy: {
+              created_at: "desc",
+            },
+
+            select: {
+              id: true,
+              file_name: true,
+              file_url: true,
+              file_size: true,
+              mime_type: true,
+              uploaded_by: true,
+              created_at: true,
+            },
+          },
+
+          /**
+           * Work logs
+           */
+          work_logs: {
+            where: {
+              deleted_at: null,
+            },
+
+            orderBy: {
+              log_date: "desc",
+            },
+
+            select: {
+              id: true,
+              user_id: true,
+              log_date: true,
+              hours_worked: true,
+              work_item_title: true,
+              daily_summary: true,
+              achievements: true,
+              blockers: true,
+            },
+          },
+
+          /**
+           * Counts
+           */
+          _count: {
+            select: {
+              checklist_items: true,
+              attachments: true,
+              activity_logs: true,
+              work_logs: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+  return {
+    total,
+    tasks,
+  };
+};

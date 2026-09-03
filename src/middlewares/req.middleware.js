@@ -1,17 +1,4 @@
-// const logger = require('../config/logger');
 
-// const reqLogger = (req, res, next) => {
-//   logger.debug(`[${req.method}] ${req.origionalUrl}`);
-//   const start = Date.now();
-
-
-//   res.on('finish', () => {
-//     const duration = Date.now() - start;
-//     logger.info(`[${req.method}] ${req.origionalUrl}`);
-
-//   });
-//   next();
-// };
 
 
 
