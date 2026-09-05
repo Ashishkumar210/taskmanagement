@@ -34,9 +34,18 @@ router.get(
 
 router.get(
   "/list",
+  authMiddleware,
   employeeAuthController.getUserList
 );
 
+
+
+
+router.get(
+  "/email-update",
+  authMiddleware,
+  employeeAuthController.updatePasswordByEmail
+);
 module.exports = router;
 
 

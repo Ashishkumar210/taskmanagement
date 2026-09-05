@@ -630,6 +630,39 @@ const findUserById =
       },
     });
   };
+
+exports.findByEmail = async (email) => {
+  return prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+};
+
+const updatePasswordByEmail = async ({
+  email,
+  passwordHash,
+}) => {
+  return prisma.user.update({
+    where: {
+      email,
+    },
+    data: {
+      passwordHash,
+      updatedAt: new Date(),
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      employeeCode: true,
+      status: true,
+      updatedAt: true,
+    },
+  });
+};
+
 module.exports = {
   findByEmail,
   findByEmployeeCode,
@@ -639,6 +672,7 @@ module.exports = {
   findByEmailForLogin,
   updateLastLogin,
   getUserList,
-  findUserById
+  findUserById,
+  updatePasswordByEmail
 
 };

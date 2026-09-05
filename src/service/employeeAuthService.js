@@ -649,3 +649,110 @@ exports.getUserDetails =
 
     return user;
   };
+
+
+
+
+
+exports.updatePasswordByEmail = async ({
+  email,
+  password,
+}) => {
+  /**
+   * Basic validation
+   */
+  if (
+    !email ||
+    typeof email !== "string"
+  ) {
+    throw new BadRequestError(
+      "Email is required."
+    );
+  }
+
+  if (
+    !password ||
+    typeof password !== "string"
+  ) {
+    throw new BadRequestError(
+      "Password is required."
+    );
+  }
+
+  /**
+   * Normalize email
+   */
+  const normalizedEmail =
+    normalizeEmail(email);
+
+  /**
+   * Email validation
+   */
+  const emailRegex =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (
+    !emailRegex.test(normalizedEmail)
+  ) {
+    throw new BadRequestError(
+      "Please enter a valid email address."
+    );
+  }
+
+  /**
+   * Password validation
+   */
+  if (password.length < 8) {
+    throw new BadRequestError(
+      "Password must contain at least 8 characters."
+    );
+  }
+
+  if (password.length > 128) {
+    throw new BadRequestError(
+      "Password cannot exceed 128 characters."
+    );
+  }
+
+  /**
+   * Find employee
+   */
+  const user =
+    await employeeAuthRepository.findByEmail(
+      normalizedEmail
+    );
+
+  if (!user) {
+    throw new NotFoundError(
+      "No account found with this email."
+    );
+  }
+
+  /**
+   * Hash new password
+   */
+  const passwordHash =
+    await bcrypt.hash(password, 12);
+
+  /**
+   * Update password
+   */
+  const updatedUser =
+    await employeeAuthRepository.updatePasswordByEmail({
+      email: normalizedEmail,
+      passwordHash,
+    });
+
+  /**
+   * Safe response
+   */
+  return {
+    id: updatedUser.id,
+    firstName: updatedUser.firstName,
+    lastName: updatedUser.lastName,
+    email: updatedUser.email,
+    employeeCode: updatedUser.employeeCode,
+    status: updatedUser.status,
+    updatedAt: updatedUser.updatedAt,
+  };
+};

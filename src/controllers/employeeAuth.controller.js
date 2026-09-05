@@ -217,3 +217,30 @@ exports.getUserDetails =
       data: result,
     });
   });
+
+
+
+
+
+exports.updatePasswordByEmail = asyncHandler(
+  async (req, res) => {
+    const {
+      email,
+      password,
+    } = req.body;
+
+    const result =
+      await employeeAuthService
+        .updatePasswordByEmail({
+          email,
+          password,
+        });
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Password updated successfully.",
+      data: result,
+    });
+  }
+);
