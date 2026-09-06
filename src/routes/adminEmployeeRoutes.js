@@ -40,4 +40,18 @@ router.get(
   adminEmployeeController.getMyTasks
 );
 
+
+router.get(
+  "/module-dashboard",
+  authMiddleware,
+  adminEmployeeController.getModuleDashboard
+);
+
+
+
+router.get(
+  "/worklog-dashboard",
+  authMiddleware,
+  adminEmployeeController.getWorklogDashboard
+);
 module.exports = router;

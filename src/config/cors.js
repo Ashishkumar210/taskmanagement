@@ -3,6 +3,7 @@ const cors = require("cors");
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:8080",
+  "https://tasklocal.ashish.cyou"
 ];
 
 const corsOptions = {

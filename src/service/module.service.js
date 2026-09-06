@@ -431,18 +431,66 @@ exports.getActivityLogs = async ({
 
 
 
+// exports.getModuleStatusLogs = async ({
+//   organization_id,
+//   module_id,
+//   user_id,
+//   page,
+//   limit,
+// }) => {
+//   return ModuleRepository.getModuleStatusLogs({
+//     organization_id,
+//     module_id,
+//     user_id,
+//     page,
+//     limit,
+//   });
+// };
+
+
+
+
+// exports.getModuleStatusLogs = async ({
+//   organization_id,
+//   project_id,
+//   module_id,
+//   user_id,
+//   page,
+//   limit,
+// }) => {
+//   return ModuleRepository.getModuleStatusLogs({
+//     organization_id,
+//     project_id,
+//     module_id,
+//     user_id,
+//     page,
+//     limit,
+//   });
+// };
+
+
+
 exports.getModuleStatusLogs = async ({
   organization_id,
+  project_id,
   module_id,
   user_id,
+  status,
+  from_date,
+  to_date,
   page,
   limit,
 }) => {
   return ModuleRepository.getModuleStatusLogs({
     organization_id,
+    project_id,
     module_id,
     user_id,
+    status,
+    from_date,
+    to_date,
     page,
     limit,
   });
 };
+

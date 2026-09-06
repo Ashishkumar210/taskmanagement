@@ -489,10 +489,198 @@ exports.getActivityLogs = async ({
 
 
 
+// exports.getModuleStatusLogs = async ({
+//   organization_id,
+//   module_id,
+//   user_id,
+//   page = 1,
+//   limit = 10,
+// }) => {
+//   page = Number(page);
+//   limit = Number(limit);
+
+//   const skip = (page - 1) * limit;
+
+//   const where = {
+//     organization_id,
+
+//     ...(module_id
+//       ? {
+//         module_id: Number(module_id),
+//       }
+//       : {}),
+
+//     ...(user_id
+//       ? {
+//         user_id: Number(user_id),
+//       }
+//       : {}),
+//   };
+
+//   const [logs, total] = await Promise.all([
+//     prisma.projectModuleStatusLog.findMany({
+//       where,
+
+//       orderBy: {
+//         changed_at: "desc",
+//       },
+
+//       skip,
+//       take: limit,
+
+//       include: {
+//         user: {
+//           select: {
+//             id: true,
+//             firstName: true,
+//             lastName: true,
+//             email: true,
+//             employeeCode: true,
+//           },
+//         },
+
+//         module: {
+//           select: {
+//             id: true,
+//             name: true,
+//             code: true,
+
+//             project: {
+//               select: {
+//                 id: true,
+//                 name: true,
+//               },
+//             },
+//           },
+//         },
+//       },
+//     }),
+
+//     prisma.projectModuleStatusLog.count({
+//       where,
+//     }),
+//   ]);
+
+//   return {
+//     logs,
+//     pagination: {
+//       page,
+//       limit,
+//       total,
+//       totalPages: Math.ceil(total / limit),
+//     },
+//   };
+// };
+
+
+
+
+
+// exports.getModuleStatusLogs = async ({
+//   organization_id,
+//   project_id,
+//   module_id,
+//   user_id,
+//   page = 1,
+//   limit = 10,
+// }) => {
+//   page = Number(page);
+//   limit = Number(limit);
+
+//   const skip = (page - 1) * limit;
+
+//   const where = {
+//     organization_id,
+
+//     // Project filter
+//     ...(project_id !== undefined
+//       ? {
+//         module: {
+//           project_id: Number(project_id),
+//           organization_id,
+//         },
+//       }
+//       : {}),
+
+//     // Module filter
+//     ...(module_id !== undefined
+//       ? {
+//         module_id: Number(module_id),
+//       }
+//       : {}),
+
+//     // User filter
+//     ...(user_id !== undefined
+//       ? {
+//         user_id: Number(user_id),
+//       }
+//       : {}),
+//   };
+
+//   const [logs, total] = await Promise.all([
+//     prisma.projectModuleStatusLog.findMany({
+//       where,
+
+//       orderBy: {
+//         changed_at: "desc",
+//       },
+
+//       skip,
+//       take: limit,
+
+//       include: {
+//         user: {
+//           select: {
+//             id: true,
+//             firstName: true,
+//             lastName: true,
+//             email: true,
+//             employeeCode: true,
+//           },
+//         },
+
+//         module: {
+//           select: {
+//             id: true,
+//             name: true,
+//             code: true,
+
+//             project: {
+//               select: {
+//                 id: true,
+//                 name: true,
+//               },
+//             },
+//           },
+//         },
+//       },
+//     }),
+
+//     prisma.projectModuleStatusLog.count({
+//       where,
+//     }),
+//   ]);
+
+//   return {
+//     logs,
+//     pagination: {
+//       page,
+//       limit,
+//       total,
+//       totalPages: Math.ceil(total / limit),
+//     },
+//   };
+// };
+
+
 exports.getModuleStatusLogs = async ({
   organization_id,
+  project_id,
   module_id,
   user_id,
+  status,
+  from_date,
+  to_date,
   page = 1,
   limit = 10,
 }) => {
@@ -504,15 +692,57 @@ exports.getModuleStatusLogs = async ({
   const where = {
     organization_id,
 
-    ...(module_id
+    // Project filter
+    ...(project_id !== undefined
+      ? {
+        module: {
+          project_id: Number(project_id),
+          organization_id,
+        },
+      }
+      : {}),
+
+    // Module filter
+    ...(module_id !== undefined
       ? {
         module_id: Number(module_id),
       }
       : {}),
 
-    ...(user_id
+    // User filter
+    ...(user_id !== undefined
       ? {
         user_id: Number(user_id),
+      }
+      : {}),
+
+    // Status filter
+    ...(status !== undefined
+      ? {
+        new_status: status,
+      }
+      : {}),
+
+    // Date filters
+    ...(from_date || to_date
+      ? {
+        changed_at: {
+          ...(from_date
+            ? {
+              gte: new Date(
+                `${from_date}T00:00:00.000Z`
+              ),
+            }
+            : {}),
+
+          ...(to_date
+            ? {
+              lte: new Date(
+                `${to_date}T23:59:59.999Z`
+              ),
+            }
+            : {}),
+        },
       }
       : {}),
   };
@@ -571,3 +801,8 @@ exports.getModuleStatusLogs = async ({
     },
   };
 };
+
+
+
+
+

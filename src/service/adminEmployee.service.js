@@ -564,3 +564,64 @@ exports.getMyTasks = async ({
     },
   };
 };
+
+
+
+
+
+//import ModuleDashboardRepository from "../repository/moduleDashboard.repo.js";
+
+exports.getDashboard = async ({
+  organization_id,
+  project_id,
+  module_id,
+  user_id,
+  status,
+  employee_type,
+  from_date,
+  to_date,
+  page,
+  limit,
+}) => {
+  return repo.getDashboard({
+    organization_id,
+    project_id,
+    module_id,
+    user_id,
+    status,
+    employee_type,
+    from_date,
+    to_date,
+    page,
+    limit,
+  });
+};
+
+
+
+
+
+exports.getWorklogDashboard = async ({
+  organization_id,
+  project_id,
+  module_id,
+  user_id,
+  employee_type,
+  from_date,
+  to_date,
+  page,
+  limit,
+}) => {
+  return repo.getWorklogDashboard({
+    organization_id,
+    project_id,
+    module_id,
+    user_id,
+    employee_type,
+    from_date,
+    to_date,
+    page,
+    limit,
+  });
+};
+

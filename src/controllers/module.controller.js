@@ -427,61 +427,314 @@ exports.getActivityLogs = asyncHandler(
 
 
 
+// exports.getModuleStatusLogs = asyncHandler(
+//   async (req, res) => {
+//     const organization_id =
+//       req.user?.organization_id ?? 1;
+
+//     const {
+//       module_id,
+//       user_id,
+//       page = 1,
+//       limit = 10,
+//     } = req.query;
+
+//     if (module_id && Number.isNaN(Number(module_id))) {
+//       throw new BadRequestError(
+//         "Invalid module_id."
+//       );
+//     }
+
+//     if (user_id && Number.isNaN(Number(user_id))) {
+//       throw new BadRequestError(
+//         "Invalid user_id."
+//       );
+//     }
+
+//     const pageNumber = Number(page);
+//     const limitNumber = Number(limit);
+
+//     if (pageNumber < 1 || Number.isNaN(pageNumber)) {
+//       throw new BadRequestError(
+//         "Invalid page."
+//       );
+//     }
+
+//     if (limitNumber < 1 || Number.isNaN(limitNumber)) {
+//       throw new BadRequestError(
+//         "Invalid limit."
+//       );
+//     }
+
+//     const result =
+//       await ModuleService
+//         .getModuleStatusLogs({
+//           organization_id,
+
+//           module_id: module_id
+//             ? Number(module_id)
+//             : undefined,
+
+//           user_id: user_id
+//             ? Number(user_id)
+//             : undefined,
+
+//           page: pageNumber,
+//           limit: limitNumber,
+//         });
+
+//     return res.status(200).json({
+//       success: true,
+//       message:
+//         "Module activity logs fetched successfully.",
+//       data: result,
+//     });
+//   }
+// );
+
+
+
+// exports.getModuleStatusLogs = asyncHandler(
+//   async (req, res) => {
+//     const organization_id =
+//       req.user?.organization_id ?? 1;
+
+//     const {
+//       project_id,
+//       module_id,
+//       user_id,
+//       page = 1,
+//       limit = 10,
+//     } = req.query;
+
+//     // Validate project_id
+//     if (
+//       project_id &&
+//       Number.isNaN(Number(project_id))
+//     ) {
+//       throw new BadRequestError(
+//         "Invalid project_id."
+//       );
+//     }
+
+//     // Validate module_id
+//     if (
+//       module_id &&
+//       Number.isNaN(Number(module_id))
+//     ) {
+//       throw new BadRequestError(
+//         "Invalid module_id."
+//       );
+//     }
+
+//     // Validate user_id
+//     if (
+//       user_id &&
+//       Number.isNaN(Number(user_id))
+//     ) {
+//       throw new BadRequestError(
+//         "Invalid user_id."
+//       );
+//     }
+
+//     const pageNumber = Number(page);
+//     const limitNumber = Number(limit);
+
+//     if (
+//       pageNumber < 1 ||
+//       Number.isNaN(pageNumber)
+//     ) {
+//       throw new BadRequestError(
+//         "Invalid page."
+//       );
+//     }
+
+//     if (
+//       limitNumber < 1 ||
+//       Number.isNaN(limitNumber)
+//     ) {
+//       throw new BadRequestError(
+//         "Invalid limit."
+//       );
+//     }
+
+//     const result =
+//       await ModuleService.getModuleStatusLogs({
+//         organization_id,
+
+//         project_id: project_id
+//           ? Number(project_id)
+//           : undefined,
+
+//         module_id: module_id
+//           ? Number(module_id)
+//           : undefined,
+
+//         user_id: user_id
+//           ? Number(user_id)
+//           : undefined,
+
+//         page: pageNumber,
+//         limit: limitNumber,
+//       });
+
+//     return res.status(200).json({
+//       success: true,
+//       message:
+//         "Module activity logs fetched successfully.",
+//       data: result,
+//     });
+//   }
+// );
+
+
 exports.getModuleStatusLogs = asyncHandler(
   async (req, res) => {
     const organization_id =
       req.user?.organization_id ?? 1;
 
     const {
+      project_id,
       module_id,
       user_id,
+      status,
+      from_date,
+      to_date,
       page = 1,
       limit = 10,
     } = req.query;
 
-    if (module_id && Number.isNaN(Number(module_id))) {
+    // Validate project_id
+    if (
+      project_id &&
+      Number.isNaN(Number(project_id))
+    ) {
+      throw new BadRequestError(
+        "Invalid project_id."
+      );
+    }
+
+    // Validate module_id
+    if (
+      module_id &&
+      Number.isNaN(Number(module_id))
+    ) {
       throw new BadRequestError(
         "Invalid module_id."
       );
     }
 
-    if (user_id && Number.isNaN(Number(user_id))) {
+    // Validate user_id
+    if (
+      user_id &&
+      Number.isNaN(Number(user_id))
+    ) {
       throw new BadRequestError(
         "Invalid user_id."
+      );
+    }
+
+    // Validate status
+    if (status) {
+      const validStatuses = [
+        "PLANNED",
+        "DESIGN_WEB",
+        "DEVELOPMENT_WEB",
+        "IN_REVIEW_WEB",
+        "TESTING_WEB",
+        "DESIGN_APK",
+        "DEVELOPMENT_APK",
+        "IN_REVIEW_APK",
+        "TESTING_APK",
+        "DEVELOPMENT_BACKEND",
+        "IN_REVIEW_BACKEND",
+        "TESTING_BACKEND",
+        "BLOCKED",
+        "COMPLETED",
+        "ON_HOLD",
+        "CANCELLED",
+        "RE_DESIGN",
+        "IN_PROGRESS",
+        "IN_REVIEW",
+        "TESTING",
+      ];
+
+      if (!validStatuses.includes(status)) {
+        throw new BadRequestError(
+          "Invalid status."
+        );
+      }
+    }
+
+    // Validate dates
+    if (from_date && Number.isNaN(Date.parse(from_date))) {
+      throw new BadRequestError(
+        "Invalid from_date."
+      );
+    }
+
+    if (to_date && Number.isNaN(Date.parse(to_date))) {
+      throw new BadRequestError(
+        "Invalid to_date."
+      );
+    }
+
+    if (
+      from_date &&
+      to_date &&
+      new Date(from_date) > new Date(to_date)
+    ) {
+      throw new BadRequestError(
+        "from_date cannot be greater than to_date."
       );
     }
 
     const pageNumber = Number(page);
     const limitNumber = Number(limit);
 
-    if (pageNumber < 1 || Number.isNaN(pageNumber)) {
+    if (
+      pageNumber < 1 ||
+      Number.isNaN(pageNumber)
+    ) {
       throw new BadRequestError(
         "Invalid page."
       );
     }
 
-    if (limitNumber < 1 || Number.isNaN(limitNumber)) {
+    if (
+      limitNumber < 1 ||
+      Number.isNaN(limitNumber)
+    ) {
       throw new BadRequestError(
         "Invalid limit."
       );
     }
 
     const result =
-      await ModuleService
-        .getModuleStatusLogs({
-          organization_id,
+      await ModuleService.getModuleStatusLogs({
+        organization_id,
 
-          module_id: module_id
-            ? Number(module_id)
-            : undefined,
+        project_id: project_id
+          ? Number(project_id)
+          : undefined,
 
-          user_id: user_id
-            ? Number(user_id)
-            : undefined,
+        module_id: module_id
+          ? Number(module_id)
+          : undefined,
 
-          page: pageNumber,
-          limit: limitNumber,
-        });
+        user_id: user_id
+          ? Number(user_id)
+          : undefined,
+
+        status: status || undefined,
+
+        from_date: from_date || undefined,
+
+        to_date: to_date || undefined,
+
+        page: pageNumber,
+        limit: limitNumber,
+      });
 
     return res.status(200).json({
       success: true,
@@ -491,8 +744,6 @@ exports.getModuleStatusLogs = asyncHandler(
     });
   }
 );
-
-
 
 
 
