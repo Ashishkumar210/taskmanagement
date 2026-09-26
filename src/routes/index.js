@@ -12,6 +12,8 @@ const workerLogsRoutes = require("./workLog.routes");
 const adminEmployeeRoutes = require("./adminEmployeeRoutes");
 const overtimeRoutes = require("./overtimeTask.routes");
 
+const rfdRoutes = require("./rfidRoutes");
+
 // constRoutes = require("./module.route");
 // modules
 const modulesRoutes = require("./module.route");
@@ -27,4 +29,5 @@ router.use("/adminlog", adminEmployeeRoutes);
 
 router.use("/overtime", overtimeRoutes);
 router.use("/modules", modulesRoutes);
+router.use("/rfd", rfdRoutes);
 module.exports = router;
