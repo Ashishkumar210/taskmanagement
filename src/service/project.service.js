@@ -16,7 +16,7 @@ exports.getProjectList = async ({
   organization_id,
 
   page = 1,
-  limit = 20,
+  limit = 100,
 
   search,
   status,
